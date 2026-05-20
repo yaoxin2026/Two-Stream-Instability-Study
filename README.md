@@ -65,8 +65,8 @@ All simulation outputs are stored in **HDF5 (`.h5`) format**.
 ### Step 1. Clone the repository
 
 ```bash
-git clone https://github.com/yaoxin2026/Two_Stream_Instability_Study.git
-cd Two_Stream_Instability_Study
+git clone https://github.com/yaoxin2026/Two-Stream-Instability-Study.git
+cd Two-Stream-Instability-Study
 ```
 
 ---
