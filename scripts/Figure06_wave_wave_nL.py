@@ -1,6 +1,8 @@
 from YaoxPy_Import_CWD import *
 
-from YaoxPy_Wave_Equations_Two_Electrons import *
+import h5py
+
+import scipy
 
 ############################################################
 ############################################################
@@ -38,6 +40,9 @@ print("list_Timestep_Particle =",list_Timestep_Particle)
 
 list_dirname = ["yaoxpic_v25_counter_3"]
 
+
+
+
 ############################################################
 
 
@@ -52,7 +57,7 @@ path_pic_tmp = os.path.join(path_pic_tmp,"data")
 print("path_pic_tmp =",path_pic_tmp)
 
 
-list_parameters = yaoxpy.pic_parameter_read(path_pic_tmp,path_pic_tmp)
+list_parameters = yaoxpy_vis.pic_parameter_read(path_pic_tmp,path_pic_tmp)
     
 dt  = list_parameters["dt"]
 dx  = list_parameters["dx"]
@@ -98,71 +103,14 @@ print("*"*20)
 
 
 
-r'''
-mu    = 1836
-vthe  = vthe0
-
-ud_para = 0.0
-ud_perp = 0.2
-
-gamma_v = 1.0/numpy.sqrt(1.0-(ud_para**2+ud_perp**2))
-
-print("gamma = %.4f, 1/gamma = %.4f, 1 - 1/gamma = %.4f"%(gamma_v,1.0/gamma_v,1.0-1.0/gamma_v))
-
-
-print("*"*65)
-
-print("w_UH = %.8f wce"%(numpy.sqrt(wpe**2+wce**2)/wce))
-
-print("w_X  = %.8f wce"%(0.5*(wce+numpy.sqrt(4.0*wpe**2+wce**2))/wce))
-'''
-
-
 ############################################################
-
-nop0 = 400
-nop1 = 20
-
-alpha0 = nop0/(nop0+nop1)
-alpha1 = nop1/(nop0+nop1)
-
-
-
-vd0    = -0.015*CGS["c"]
-vd1    = 0.3*CGS["c"]
-
-vthe0  = 0.03*CGS["c"]
-vthe1  = 0.03*CGS["c"]
-
-mu     = 1836
-
-wpe    = 5e9
-
-wpi    = wpe/numpy.sqrt(mu)
-
-wpe0   = wpe*numpy.sqrt(alpha0)
-
-wpeL   = 0.875*wpe0
-
-
-print("wpe0 = %.4f wpe"%(wpe0/wpe))
-
-
-
-list_color04=["r","coral","m"]
-list_color08=["r","g","g","coral","m"]
-
-
-list_color12=["r","g","g","coral","m","grey","grey","b","coral","m","g","r"]
-
-
-
 ############################################################
 
 Nx = nx
 Ny = ny
 
 
+vd1 = vd1_run3
 
 
 ############################################################
@@ -218,24 +166,7 @@ KKW,KKX=numpy.meshgrid(kw,kx,indexing="ij")
 #K_TMP=numpy.arange(xmin,xmax+0.01,0.01)*norm_k
 
 
-dkw  = 0.01*wpe/norm_w
-
-
-
-############################################################
-
-k = numpy.arange(-3000,3000+1,1)*0.01*norm_k
-
-w_run3 = wave_equation_two_electrons_twelveth_solve(wpe, mu, alpha0, alpha1, vd0, vd1, vthe0, vthe1, k,
-    a=1.0, b=1.0,
-    lam_dist=1.0,
-    lam_slope=1.0,
-    lam_g=0.8,
-    lam_gslope=0.8,
-    lam_curv=0.25,
-    lam_sep=0.15,
-    tol=1.0e-12,
-    repair_passes=8)
+sigma_w  = 0.01*wpe/norm_w
 
 
 
@@ -246,31 +177,26 @@ w_run3 = wave_equation_two_electrons_twelveth_solve(wpe, mu, alpha0, alpha1, vd0
 quiver_y2x = 4.4
 
 
+hfig = plt.figure(figsize=(19,7))
 
-hfig = plt.figure(figsize=(16,8))
-
-margin=[0.06,0.04,0.06,0.16,0.08,0.12]
+margin=[0.06,0.02,0.06,0.16,0.06,0.12]
 barbox=[0.1,0.015,0.65]
-windows=[2,2]
+windows=[2,3]
 size=[1,1]
 
 
-
-
-
-
-
-
-
 ############################################################
 ############################################################
-rid,cid = 0,1
+rid,cid = 0,2
+axes_pos = [ 0.7133,  0.6100,  0.2667,  0.3300]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
-axes_pos = [0.55,0.61,0.41,0.33]
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
 
 
 
@@ -283,7 +209,7 @@ path_dataset_r="/psd/El_wkx"
 data2d  = H5FILE_R[path_dataset_r][()]
 data2d  = numpy.fliplr(data2d)
 #data2d = data2d/B0/B0
-#data2d = yaoxpy_data.data_zero_replace(data2d) 
+#data2d = yaoxpy_vis.data_zero_replace(data2d) 
 #data2d = numpy.log10(data2d)
 H5FILE_R.close()
 
@@ -307,7 +233,7 @@ no=0
 for rho in [0.5,0.6,0.7,0.8]:
 
     WTMP = KKX*norm_k*vd1*rho/norm_w
-    DIS  = numpy.abs(KKW-WTMP)/dkw
+    DIS  = numpy.abs(KKW-WTMP)/sigma_w
     MASK = numpy.exp(-0.5*DIS**2)
 
     data2d_mask=MASK*data2d
@@ -334,7 +260,7 @@ for rho in [0.5,0.6,0.7,0.8]:
     #for k in [1,2,3,4]:
     #    haxe.axvline(x=k*kfa,linestyle="--",color="r")
 
-    haxe.plot(ktmp/kf,ptmp,color=list_color[no],label=r"$\rho=%.1f:k_F=%.2fd_e^{-1}$"%(rho,kf))
+    haxe.plot(ktmp/kf,ptmp,color=list_color[no],label=r"$v_{ph}=%.1fv_{d2},k_F=%.2fd_e^{-1}$"%(rho,kf))
 
     #haxe.plot(ktmp/kf,p_smooth,color=list_color[no],label=r"$\rho=%.1f:k_F=%.2fd_e^{-1}$"%(rho,kf))
 
@@ -346,7 +272,7 @@ for rho in [0.5,0.6,0.7,0.8]:
 
 
 
-haxe.legend(loc="upper right",frameon=False,fontsize=15)
+haxe.legend(loc="upper right",frameon=False,fontsize=12)
 
 
 for i in range(1,5):
@@ -378,14 +304,14 @@ haxe.tick_params(axis="y",labelsize=20)
 # label
 xlim_tmp=haxe.get_xlim()
 ylim_tmp=haxe.get_ylim()
-haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(b1)$",color="k",fontsize=20)
+haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(c1)$",color="k",fontsize=18)
 
 
 
 
-haxe.set_xlabel(r"$k_{\parallel}/k_F$",fontsize=22)
+haxe.set_xlabel(r"$k_{\parallel}/k_F$",fontsize=20)
 
-haxe.set_ylabel(r"$Power\ \mathcal{P}(k_{\parallel})$",fontsize=22)
+haxe.set_ylabel(r"$Power\ \mathcal{P}(k_{\parallel})$",fontsize=20)
 
 
 
@@ -401,13 +327,15 @@ haxe.set_ylabel(r"$Power\ \mathcal{P}(k_{\parallel})$",fontsize=22)
 
 ############################################################
 ############################################################
-rid,cid = 1,1
+rid,cid = 1,2
+axes_pos = [ 0.7133,  0.1600,  0.2667,  0.3300]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
-axes_pos = [0.55,0.16,0.41,0.33]
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
 
@@ -420,7 +348,7 @@ path_dataset_r="/psd/El_wkx"
 data2d  = H5FILE_R[path_dataset_r][()]
 data2d  = numpy.fliplr(data2d)
 #data2d = data2d/B0/B0
-#data2d = yaoxpy_data.data_zero_replace(data2d) 
+#data2d = yaoxpy_vis.data_zero_replace(data2d) 
 #data2d = numpy.log10(data2d)
 H5FILE_R.close()
 
@@ -444,7 +372,7 @@ no=0
 for rho in [0.5,0.6,0.7,0.8]:
 
     WTMP = KKX*norm_k*vd1*rho/norm_w
-    DIS  = numpy.abs(KKW-WTMP)/dkw
+    DIS  = numpy.abs(KKW-WTMP)/sigma_w
     MASK = numpy.exp(-0.5*DIS**2)
 
     data2d_mask=MASK*data2d
@@ -471,7 +399,7 @@ for rho in [0.5,0.6,0.7,0.8]:
     list_wf.append(kf)
     
     
-    haxe.plot(ktmp/kf,ptmp,color=list_color[no],label=r"$\rho=%.1f:\omega_F=%.2fd_e^{-1}$"%(rho,kf))
+    haxe.plot(ktmp/kf,ptmp,color=list_color[no],label=r"$v_{ph}=%.1fv_{d2},\omega_F=%.2fd_e^{-1}$"%(rho,kf))
     
     #haxe.plot(ktmp/kf,p_smooth,color=list_color[no],label=r"$\rho=%.1f:\omega_F=%.2fd_e^{-1}$"%(rho,kf))
 
@@ -483,7 +411,7 @@ for rho in [0.5,0.6,0.7,0.8]:
 
 
 
-haxe.legend(loc="upper right",frameon=False,fontsize=15)
+haxe.legend(loc="upper right",frameon=False,fontsize=12)
 
 
 
@@ -517,15 +445,20 @@ haxe.tick_params(axis="y",labelsize=20)
 # label
 xlim_tmp=haxe.get_xlim()
 ylim_tmp=haxe.get_ylim()
-haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(b2)$",color="k",fontsize=20)
+haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(c2)$",color="k",fontsize=18)
 
 
 
-haxe.set_xlabel(r"$\omega/\omega_F$",fontsize=22)
+haxe.set_xlabel(r"$\omega/\omega_F$",fontsize=20)
 
-haxe.set_ylabel(r"$Power\ \mathcal{P}(\omega)$",fontsize=22)
+haxe.set_ylabel(r"$Power\ \mathcal{P}(\omega)$",fontsize=20)
 
 
+
+
+
+
+lwid = 1.2
 
 
 
@@ -534,14 +467,18 @@ haxe.set_ylabel(r"$Power\ \mathcal{P}(\omega)$",fontsize=22)
 ############################################################
 ############################################################
 ############################################################
-rid,cid = 0,0
+rid,cid = 0,1
+axes_pos = [ 0.3767,  0.1600,  0.2667,  0.7800]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[2,1],windows=windows,margin=margin)
-axes_pos = [0.06,0.16,0.41,0.78]
+axes_pos[0] -= 0.01
+
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
 dir_tmp = list_dirname[0]
@@ -557,15 +494,15 @@ data2d = numpy.fliplr(data2d)
 print("data2d =",data2d.shape)
 print("KKX    =",KKX.shape)
 
-#dkw  = 0.05*wpe/norm_w
+#sigma_w  = 0.05*wpe/norm_w
 WTMP = KKX*norm_k*vd1*0.6/norm_w
-DIS  = numpy.abs(KKW-WTMP)/dkw
+DIS  = numpy.abs(KKW-WTMP)/sigma_w
 MASK = numpy.exp(-0.5*DIS**2)
 
 data2d*=MASK
 '''
 
-data2d = yaoxpy.data_zero_replace(data2d) 
+data2d = yaoxpy_vis.data_zero_replace(data2d) 
 data2d = numpy.log10(data2d)
 
 
@@ -578,99 +515,58 @@ him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.
 #him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto")
 
 
-
-#axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[2,1],windows=windows,margin=margin,orient='horizontal',barbox=barbox)
-
-axes_pos = [0.13175,0.045,0.2665,0.015]
-
-haxe_bar = hfig.add_axes(axes_pos)
+axes_pos_bar = [ 0.4333,  0.0450,  0.1733,  0.0150]
+#axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[2,1],windows=windows,margin=margin,orient='horizontal',barbox=barbox)
+haxe_bar = hfig.add_axes(axes_pos_bar)
 hfig.colorbar(him,cax=haxe_bar,orientation='horizontal',shrink=0.5)
 
-print("rid,cid      = %d,%d"%(rid,cid))
-print("axes_pos_bar =",axes_pos)
+print("rid,cid       = (%d, %d)"%(rid,cid))
+print("axes_pos_bar = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos_bar[0],axes_pos_bar[1],axes_pos_bar[2],axes_pos_bar[3]))
 
 
 
 
 
-######################################## Bohm-Gross
-k    = numpy.arange(-30,30+0.01,0.01)*norm_k
 
-#w   = numpy.sqrt(wpe0*wpe0+3.0*numpy.power(k*vthe0,2.0))
+######################################### Bohm-Gross
 
-w    = numpy.sqrt(wpeL*wpeL+3.0*numpy.power(k*vthe0,2.0))
+haxe.plot(k/norm_k,wL_run3/norm_w,linestyle="-.",linewidth=lwid,color="r",label=r"$Langmuir$")
 
-
-haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.2,color="r",label=r"$Langmuir$")
-
-haxe.annotate(r"$Langmuir$",xy=(-7.0,0.85),xytext=(-15.5,0.6),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+haxe.annotate(r"$Langmuir$",xy=(-7.5,1.1),xytext=(-18,0.8),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
 
 
+
+######################################## Beam
+
+#wBeam0 = vd0_run3*k
+#haxe.plot(k/norm_k, wBeam0/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+wBeam1 = vd1_run3*k
+haxe.plot(k/norm_k, wBeam1/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+
+haxe.annotate(r"$beam$",xy=(11.0,3.1),xytext=(13.5,2.9),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g",fontsize=16)
 
 
 ########################################
 
+m = 2
+wm_real = numpy.copy(wroots_real_run3[:,m])
+
+index = wm_real>=0
+
+haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="m",label=r"$hybrid$")
 
 
-for i in [4]:
-    wtmp=numpy.real(w_run3[i,:])
+haxe.annotate(r"$beam\textendash modified$",xy=(12,0.9),xytext=(13,0.6),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m",fontsize=16)
 
-    index=wtmp/norm_w>=-100
-    haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color="b")
-
-    xtmp=k[index]/norm_k
-    ytmp=wtmp[index]/norm_w
-
-    spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
-    xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
-    ytmp = spline(xtmp)
-
-    haxe.plot(xtmp,ytmp,linestyle="-.",linewidth=1.0,color="b")
-
-
-
-#haxe.annotate(r"$beam\textendash modified\ Langmuir$",xy=(7.0,0.9),xytext=(8.0,0.6),arrowprops=dict(facecolor="b",edgecolor="b",width=0.4,headwidth=4.0,headlength=4.0),color="b")
-
-
-haxe.annotate(r"$hybrid$",xy=(7.0,0.85),xytext=(8.0,0.55),arrowprops=dict(facecolor="b",edgecolor="b",width=0.4,headwidth=4.0,headlength=4.0),color="b")
-
-
-######################################## IA
-#w = wave_equation_two_electrons_IA_solve_2(wpe,mu,alpha0,alpha1,vthe0,vthe1,k)
-#haxe.plot(k/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="b",label=r"$IA$")
-
-
-
-######################################## beam mode
-#k2   = numpy.arange(0,30+0.01,0.01)*norm_k
-#w = vb*k2
-#haxe.plot(k2/norm_k,w/norm_w,linestyle="-",linewidth=2.0,color="g",label=r"$beam\ \omega=v_{b}\cdot k$")
-
-
-
-
-######################################## EA
-
-k = numpy.arange(0,30+0.01,0.01)*norm_k
-
-#w = wave_equation_EA(wpe,mu,alpha0,alpha1,vd1,vthe0,vthe1,k)
-#haxe.plot(k/norm_k,w/norm_w,linestyle="--",linewidth=1.2,color="k")
-
-w = wave_equation_EA_gary(wpe,mu,alpha0,alpha1,vd1,vthe0,vthe1,k)
-haxe.plot(k/norm_k,w/norm_w,linestyle="--",linewidth=1.2,color="k")
-
-
-haxe.annotate(r"$EA$",xy=(6.0,0.55),xytext=(7.5,0.3),arrowprops=dict(facecolor="k",edgecolor="k",width=0.4,headwidth=4.0,headlength=4.0),color="k")
 
 
 
 
 
 ######################################## coalescence
-
-
-
 k    = numpy.arange(0,30+0.01,0.01)*norm_k
 
 lwid = 1.6
@@ -686,7 +582,7 @@ kL = list_kf[0]
 wL = list_wf[0]
 
 for n in [1,2,3,4]:
-    haxe.scatter(n*kL,n*wL,marker="o",s=50,color="w")
+    haxe.scatter(n*kL,n*wL,marker="o",s=35,color="w")
 
 
 ##########
@@ -697,7 +593,7 @@ kL = list_kf[1]
 wL = list_wf[1]
 
 for n in [1,2,3,4]:
-    haxe.scatter(n*kL,n*wL,marker="o",s=50,color="w")
+    haxe.scatter(n*kL,n*wL,marker="o",s=35,color="w")
 
 
 ##########
@@ -708,7 +604,7 @@ kL = list_kf[2]
 wL = list_wf[2]
 
 for n in [1,2,3,4]:
-    haxe.scatter(n*kL,n*wL,marker="o",s=50,color="w")
+    haxe.scatter(n*kL,n*wL,marker="o",s=35,color="w")
 
 
 
@@ -720,12 +616,12 @@ kL = list_kf[3]
 wL = list_wf[3]
 
 for n in [1,2,3,4]:
-    haxe.scatter(n*kL,n*wL,marker="o",s=50,color="w")
+    haxe.scatter(n*kL,n*wL,marker="o",s=35,color="w")
 
 
 
 for n in [1,2,3,4]:
-    haxe.text(n*kL-4,n*wL,r"$L_{%d}$"%(n),color="w",fontsize=28)
+    haxe.text(n*kL-4,n*wL,r"$L_{%d}$"%(n),color="w",fontsize=24)
 
 
 
@@ -770,14 +666,188 @@ haxe.tick_params(axis="y",labelsize=20)
 # label
 xlim_tmp=haxe.get_xlim()
 ylim_tmp=haxe.get_ylim()
-haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.9*(ylim_tmp[1]-ylim_tmp[0]),r"$(a)Wave\ Steepening\ nL\to L_n$",color="w",fontsize=20)
+haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.9*(ylim_tmp[1]-ylim_tmp[0]),r"$(b)Wave\ Steepening\ nL\to L_n$",color="w",fontsize=18)
 
 
 
 
-haxe.set_xlabel(r"$k_{\parallel}\cdot d_e$",fontsize=24)
+haxe.set_xlabel(r"$k_{\parallel}\cdot d_e$",fontsize=20)
 
-haxe.set_ylabel(r"$\omega/\omega_{pe}$",fontsize=24)
+haxe.set_ylabel(r"$\omega/\omega_{pe}$",fontsize=20)
+
+
+
+
+
+
+############################################################
+############################################################
+############################################################
+############################################################
+rid,cid = 0,0
+axes_pos = [ 0.0600,  0.1600,  0.2667,  0.7800]
+
+#axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[2,1],windows=windows,margin=margin)
+haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
+
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
+
+h5name_R1 = "fft2d_timestep_{:d}_period_{:d}dt_samples_{:d}_txy.h5".format(Timestep,FFT_Sample_Num_dt,FFT_Sample_Num)
+
+dir_tmp = list_dirname[0]
+path_pic_tmp  = os.path.join(path_data_pic,dir_tmp)
+path_data_tmp = os.path.join(path_pic_tmp,"data")
+
+
+
+
+H5FILE_R=h5py.File(os.path.join(path_data_tmp,h5name_R1),"r")
+path_dataset_r="/data/Ex_tx"
+data2d = H5FILE_R[path_dataset_r][()]
+H5FILE_R.close()
+
+data2d=data2d.T
+
+t=numpy.arange(data2d.shape[1])*Dt
+x=numpy.arange(data2d.shape[0])*Dx
+
+
+norm_t = 1.0/wpe
+norm_x = Dx
+
+tmin0,tmax0 = 0,numpy.max(t)/norm_t
+xmin0,xmax0 = 0,numpy.max(x)/norm_x
+
+him=haxe.imshow(data2d,origin="lower",extent=[tmin0,tmax0,xmin0,xmax0],cmap=mpl.cm.coolwarm,aspect="auto")
+
+axes_pos_bar = [ 0.1067,  0.0450,  0.1733,  0.0150]
+#axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[2,1],windows=windows,margin=margin,orient='horizontal',barbox=barbox)
+haxe_bar = hfig.add_axes(axes_pos_bar)
+hfig.colorbar(him,cax=haxe_bar,orientation='horizontal',shrink=0.5)
+
+print("rid,cid      = (%d, %d)"%(rid,cid))
+print("axes_pos_bar = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos_bar[0],axes_pos_bar[1],axes_pos_bar[2],axes_pos_bar[3]))
+
+
+
+
+
+
+#x_vd1   = t*vd1_run3
+#x_vthe1 = t*vthe1
+
+#haxe.plot(t/norm_t,x_vd1/norm_x,linestyle="-",linewidth=1.0,color="g")
+#haxe.plot(t/norm_t,x_vthe1/norm_x,linestyle="-",linewidth=1.0,color="r")
+
+vd1   = vd1_run3
+
+
+lwid = 1.6
+
+
+#####
+x_vd1 = 0.5*t*vd1-330*norm_x
+
+index = numpy.logical_and(x_vd1>=0, x_vd1<=1024*norm_x)
+
+haxe.plot(t[index]/norm_t,x_vd1[index]/norm_x,linestyle="--",linewidth=lwid,color="w")
+
+haxe.text(130,25,r"$v_{ph}=0.5v_{d2}$",color="w",fontsize=16,rotation=25)
+
+
+
+#####
+x_vd1 = 0.6*t*vd1-214*norm_x
+
+
+index = numpy.logical_and(x_vd1>=0, x_vd1<=1024*norm_x)
+
+haxe.plot(t[index]/norm_t,x_vd1[index]/norm_x,linestyle="--",linewidth=lwid,color="w")
+
+haxe.text(100,130,r"$v_{ph}=0.6v_{d2}$",color="w",fontsize=16,rotation=25)
+
+
+
+
+#####
+x_vd1 = 0.7*t*vd1+635*norm_x
+
+index = numpy.logical_and(x_vd1>=0, x_vd1<=1024*norm_x)
+
+haxe.plot(t[index]/norm_t,x_vd1[index]/norm_x,linestyle="--",linewidth=lwid,color="w")
+
+haxe.text(45,750,r"$v_{ph}=0.7v_{d2}$",color="w",fontsize=16,rotation=30)
+
+
+
+
+#####
+x_vd1 = 0.80*t*vd1+822*norm_x
+
+index = numpy.logical_and(x_vd1>=0, x_vd1<=1024*norm_x)
+
+haxe.plot(t[index]/norm_t,x_vd1[index]/norm_x,linestyle="--",linewidth=lwid,color="w")
+
+haxe.text(10,815,r"$v_{ph}=0.8v_{d2}$",color="w",fontsize=16,rotation=35)
+
+
+
+
+
+
+
+
+
+
+
+
+#haxe.legend(loc="upper center",frameon=True,fontsize=10)
+
+#haxe.grid(linestyle="--",linewidth=0.2,color="grey")
+
+
+xmin,xmax = tmin0,165
+ymin,ymax = xmin0,xmax0
+
+xticks=numpy.arange(0,160+40,40)
+xticklabel=[r"$%d$"%(tmp) for tmp in xticks]
+
+yticks=numpy.arange(0,1000+200,200)
+yticklabel=[r"$%d$"%(tmp) for tmp in yticks]
+
+haxe.set_xlim(xmin,xmax)
+haxe.set_ylim(ymin,ymax)
+#haxe.set_zlim(zmin,zmax)
+
+haxe.set_xticks(xticks)
+haxe.set_xticklabels(xticklabel)
+haxe.set_yticks(yticks)
+haxe.set_yticklabels(yticklabel)
+
+haxe.tick_params(direction='in', length=5, width=1, colors='k')
+
+haxe.tick_params(axis="x",labelsize=20)
+haxe.tick_params(axis="y",labelsize=20)
+
+
+
+# label
+xlim_tmp=haxe.get_xlim()
+ylim_tmp=haxe.get_ylim()
+haxe.text(xlim_tmp[0]+0.05*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.9*(ylim_tmp[1]-ylim_tmp[0]),r"$(a)\overline{E_{l}(x,t)}$",color="k",fontsize=18)
+
+
+
+
+
+haxe.set_xlabel(r"$t\cdot\omega_{pe}$",fontsize=20)
+
+haxe.set_ylabel(r"$x/\Delta x$",fontsize=20)
+
+
 
 
 
@@ -789,4 +859,4 @@ haxe.set_ylabel(r"$\omega/\omega_{pe}$",fontsize=24)
 fig_path = path_fig
 fig_name = os.path.splitext(os.path.basename(__file__))[0]
     
-yaoxpy.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)
+yaoxpy_vis.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)

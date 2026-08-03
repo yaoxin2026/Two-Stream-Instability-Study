@@ -1,5 +1,12 @@
 from YaoxPy_Import_CWD import *
 
+import h5py
+
+import scipy
+
+
+#plt.switch_backend('TkAgg') 
+
 ############################################################
 ############################################################
 
@@ -11,7 +18,7 @@ list_Timestep_Particle = [0,600,800,1000,1200,1600,2000,3000,4000,6000,8000,1000
 list_Timestep_Particle_ion = [10000]
 
 
-list_color=yaoxpy.colors_generate(len(list_Timestep_Particle)+1,mpl.cm.rainbow)
+list_color=yaoxpy_vis.colors_generate(len(list_Timestep_Particle)+1,mpl.cm.rainbow)
 
 list_color = list_color[::-1]
 
@@ -31,7 +38,7 @@ path_pic_tmp = os.path.join(path_pic_tmp,"data")
 print("path_pic_tmp =",path_pic_tmp)
 
 
-list_parameters = yaoxpy.pic_parameter_read(path_pic_tmp,path_pic_tmp)
+list_parameters = yaoxpy_vis.pic_parameter_read(path_pic_tmp,path_pic_tmp)
     
 dt  = list_parameters["dt"]
 dx  = list_parameters["dx"]
@@ -87,15 +94,16 @@ size=[1,1]
 
 ############################################################
 ############################################################
-rid,cid=0,0
-#axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
-#print("axes_pos =",axes_pos)
+rid,cid = 0,0
 
-axes_pos = [0.06,0.70666667,0.4,0.26333333]
+axes_pos = [ 0.0600,  0.7067,  0.4000,  0.2633]
+
+#axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
 for tid in range(len(list_Timestep_Particle)):
@@ -223,16 +231,16 @@ haxe.set_ylabel(r"$f(v_{\parallel})$",fontsize=24)
 
 ############################################################
 ############################################################
-rid,cid=1,0
+rid,cid = 1,0
+
+axes_pos = [ 0.0600,  0.3933,  0.4000,  0.2633]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
-#print("axes_pos =",axes_pos)
-
-axes_pos = [0.06,0.39333333,0.4,0.26333333]
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 for tid in range(len(list_Timestep_Particle)):
     
@@ -356,16 +364,16 @@ haxe.set_ylabel(r"$f(v_{\parallel})$",fontsize=24)
 
 ############################################################
 ############################################################
-rid,cid=2,0
+rid,cid = 2,0
+
+axes_pos = [ 0.0600,  0.0800,  0.4000,  0.2633]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,1],windows=windows,margin=margin)
-#print("axes_pos =",axes_pos)
-
-axes_pos = [0.06,0.08,0.4,0.26333333]
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 for tid in range(len(list_Timestep_Particle)):
     
@@ -488,17 +496,16 @@ haxe.set_ylabel(r"$f(v_{\parallel})$",fontsize=24)
 
 ############################################################
 ############################################################
-############################################################
-############################################################
-rid,cid=0,1
+rid,cid = 0,1
+
+axes_pos = [ 0.5600,  0.7067,  0.4000,  0.2633]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-
-axes_pos = [0.56,0.70666667,0.4,0.26333333]
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 dir_tmp = list_dirname[rid]
 path_pic_tmp  = os.path.join(path_data_pic,dir_tmp)
@@ -781,14 +788,16 @@ haxe.set_ylabel(r"$\Delta \mathcal{E}/\mathcal{E}_{k0}$",fontsize=24)
 
 ############################################################
 ############################################################
-rid,cid=1,1
-#axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
+rid,cid = 1,1
 
-axes_pos = [0.56,0.39333333,0.4,0.26333333]
+axes_pos = [ 0.5600,  0.3933,  0.4000,  0.2633]
+
+#axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
 dir_tmp = list_dirname[rid]
@@ -1112,13 +1121,16 @@ haxe.set_ylabel(r"$\Delta \mathcal{E}/\mathcal{E}_{k0}$",fontsize=24)
 
 ############################################################
 ############################################################
-rid,cid=2,1
+rid,cid = 2,1
+
+axes_pos = [ 0.5600,  0.0800,  0.4000,  0.2633]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-axes_pos = [0.56,0.08,0.4,0.26333333]
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
 dir_tmp = list_dirname[rid]
@@ -1402,4 +1414,4 @@ fig_path = path_fig
 fig_name = os.path.splitext(os.path.basename(__file__))[0]
 
 
-yaoxpy.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)
+yaoxpy_vis.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)

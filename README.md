@@ -149,8 +149,8 @@ The generated figures can be compared directly with the reference figures provid
 The repository includes auxiliary Python modules:
 
 ```text
-YaoxPy_Import_Funs.py
-YaoxPy_Wave_Equations_Two_Electrons.py
+YaoxPy_PIC.py
+YaoxPy_Wave_Equations.py
 YaoxPy_Import_CWD.py
 ```
 

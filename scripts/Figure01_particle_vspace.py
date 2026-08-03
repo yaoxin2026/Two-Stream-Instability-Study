@@ -1,5 +1,11 @@
 from YaoxPy_Import_CWD import *
 
+import h5py
+
+import scipy
+
+
+#plt.switch_backend('TkAgg') 
 
 ############################################################
 ############################################################
@@ -11,7 +17,7 @@ color_beam1 = "#003171"
 color_beam2 = "coral"
 color_vdf   = "r"
 
-color_axis  = "gray"
+color_axis = "gray"
 
 
 
@@ -27,16 +33,16 @@ size=[1,1]
 
 
 ############################################################
-rid,cid=0,0
+rid,cid = 0,0
+
+axes_pos = [-0.0400,  0.1000,  0.5540,  0.8700]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[3,3],windows=windows,margin=margin)
 #axes_pos[0]-=0.04
-
-axes_pos = [-0.04,0.1,0.554,0.87]
-
 haxe=hfig.add_axes(axes_pos,projection="3d")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
 
 
 
@@ -81,19 +87,19 @@ him2=haxe.scatter(vx2[index],vy2[index],vz2[index],marker="o",s=5,rasterized=Tru
 
 ########## axis
 xmin,xmax=0.35,0.45
-yaoxpy.arrow3d(haxe,[-0.50,-0.08,0.05],[-0.38,-0.08,0.05],col=color_axis,ra=0.0)
-yaoxpy.arrow3d(haxe,[-0.15,-0.08,0.05],[0.195,-0.08,0.05],col=color_axis,ra=0.0)
-yaoxpy.arrow3d(haxe,[0.45,-0.08,0.05],[0.55,-0.08,0.05],col=color_axis,ra=0.35)
+yaoxpy_vis.arrow3d(haxe,[-0.50,-0.08,0.05],[-0.38,-0.08,0.05],col=color_axis,ra=0.0)
+yaoxpy_vis.arrow3d(haxe,[-0.15,-0.08,0.05],[0.195,-0.08,0.05],col=color_axis,ra=0.0)
+yaoxpy_vis.arrow3d(haxe,[0.45,-0.08,0.05],[0.55,-0.08,0.05],col=color_axis,ra=0.35)
 haxe.text(0.55,-0.05,0.0,r"$v_{\parallel}$",color=color_axis,fontsize=25)
 
 
 ymin,ymax=-0.02,-0.25
-yaoxpy.arrow3d(haxe,[0.011,ymin,0.0],[0.011,ymax,0.0],col=color_axis,ra=0.15)
+yaoxpy_vis.arrow3d(haxe,[0.011,ymin,0.0],[0.011,ymax,0.0],col=color_axis,ra=0.15)
 haxe.text(0.0,-0.35,0.0,r"$v_{\perp2}$",color=color_axis,fontsize=25)
 
 
 zmin,zmax=-0.02,0.25
-yaoxpy.arrow3d(haxe,[0.0,0.0,zmin],[0.0,0.0,zmax],col=color_axis,ra=0.13)
+yaoxpy_vis.arrow3d(haxe,[0.0,0.0,zmin],[0.0,0.0,zmax],col=color_axis,ra=0.13)
 haxe.text(-0.02,0.0,0.28,r"$v_{\perp1}$",color=color_axis,fontsize=25)
 
 
@@ -148,17 +154,19 @@ haxe.view_init(elev=30,azim=-65,roll=0)
 
 
 ############################################################
-rid,cid=0,3
+rid,cid = 0,3
+
+axes_pos = [ 0.5440,  0.7133,  0.4060,  0.2567]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,2],windows=windows,margin=margin)
 #axes_pos[0]-=0.05
 #axes_pos[2]+=0.05
-
-axes_pos = [0.544,0.71333333,0.406,0.25666667]
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
 
 Timestep=0
 
@@ -272,18 +280,18 @@ haxe.set_ylabel(r"$f(v_{\parallel})$",fontsize=24)
 
 
 ############################################################
-rid,cid=1,3
+rid,cid = 1,3
+
+axes_pos = [ 0.5440,  0.4067,  0.4060,  0.2567]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,2],windows=windows,margin=margin)
 #axes_pos[0]-=0.05
 #axes_pos[2]+=0.05
-
-axes_pos=[0.544,0.40666667,0.406,0.25666667]
-
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 Timestep=0
 
@@ -394,17 +402,19 @@ haxe.set_ylabel(r"$f(v_{\parallel})$",fontsize=24)
 
 
 ############################################################
-rid,cid=2,3
+rid,cid = 2,3
+
+axes_pos = [ 0.5440,  0.1000,  0.4060,  0.2567]
+
 #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=[1,2],windows=windows,margin=margin)
 #axes_pos[0]-=0.05
 #axes_pos[2]+=0.05
-
-axes_pos = [0.544,0.1,0.406,0.25666667]
-
 haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-print("rid,cid  = %d,%d"%(rid,cid))
-print("axes_pos =",axes_pos)
+print("rid,cid  = (%d, %d)"%(rid,cid))
+print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
 
 Timestep=0
 
@@ -524,4 +534,4 @@ fig_path = path_fig
 fig_name = os.path.splitext(os.path.basename(__file__))[0]
 
 
-yaoxpy.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)
+yaoxpy_vis.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)

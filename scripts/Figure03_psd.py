@@ -1,6 +1,8 @@
 from YaoxPy_Import_CWD import *
 
-from YaoxPy_Wave_Equations_Two_Electrons import *
+import h5py
+
+import scipy
 
 ############################################################
 ############################################################
@@ -36,6 +38,7 @@ print("list_Timestep_Particle =",list_Timestep_Particle)
 
 list_dirname = ["yaoxpic_v25_counter_1","yaoxpic_v25_counter_2","yaoxpic_v25_counter_3"]
 
+
 list_run_id = [1,2,3]
 
 
@@ -53,7 +56,7 @@ path_pic_tmp = os.path.join(path_pic_tmp,"data")
 print("path_pic_tmp =",path_pic_tmp)
 
 
-list_parameters = yaoxpy.pic_parameter_read(path_pic_tmp,path_pic_tmp)
+list_parameters = yaoxpy_vis.pic_parameter_read(path_pic_tmp,path_pic_tmp)
     
 dt  = list_parameters["dt"]
 dx  = list_parameters["dx"]
@@ -72,7 +75,7 @@ print("ncpu      = %5d"%(ncpu))
 print("nspecies  = %5d"%(nspecies))
 print("wpe       = %14.4e"%(wpe))
 print("wce       = %14.4e"%(wce))
-    
+
 m0     = list_parameters["m0"]
 macro0 = list_parameters["macro0"]
 vd0    = list_parameters["vd0"]
@@ -85,9 +88,8 @@ vthe2 = list_parameters["vth2"]
     
 Dx    = dx
 Dt    = dt*FFT_Sample_Num_dt
-    
-cs    = CGS["c"]
-    
+
+
 de    = CGS["c"]/wpe
 rhon0 = (wpe/CGS["e"])**2*CGS["me"]/4.0/numpy.pi
 J0    = CGS["e"]*rhon0*vthe0*CGS["c"]
@@ -96,59 +98,11 @@ B0    = CGS["me"]*CGS["c"]/CGS["e"]*wce
 print("*"*20)
 
 
-
-
-mu    = 1836
-vthe  = vthe0
-
-ud_para = 0.0
-ud_perp = 0.2
-
-gamma_v = 1.0/numpy.sqrt(1.0-(ud_para**2+ud_perp**2))
-
-print("gamma = %.4f, 1/gamma = %.4f, 1 - 1/gamma = %.4f"%(gamma_v,1.0/gamma_v,1.0-1.0/gamma_v))
-
-
-print("*"*65)
-
-print("w_UH = %.8f wce"%(numpy.sqrt(wpe**2+wce**2)/wpe))
-
-print("w_X  = %.8f wce"%(0.5*(wce+numpy.sqrt(4.0*wpe**2+wce**2))/wpe))
-
-
-
 ############################################################
-
-
-#alpha0 = 0.5
-#alpha1 = 0.5
-
-#vd0    = -0.2*CGS["c"]
-#vd1    = 0.2*CGS["c"]
-
-vthe0  = 0.03*CGS["c"]
-vthe1  = 0.03*CGS["c"]
-
-mu     = 1836
-
-wpe    = 5e9
-
-wpi    = wpe/numpy.sqrt(mu)
-
-
-list_color04 = ["r","coral","m"]
-
-
-list_color12 = ["r","g","g","coral","m","grey","grey","m","coral","g","g","r"]
-
-YXColorBlue = "#003171"
-
-
 ############################################################
 
 Nx = nx
 Ny = ny
-
 
 
 xmin,xmax =-22,22
@@ -177,7 +131,7 @@ vmin1,vmax1=-10,2
 vmin2,vmax2=-11,1
 
 
-line_wid = 1.0
+lwid = 1.0
 
 
 cmap = mpl.cm.jet
@@ -220,7 +174,7 @@ for tid in [0]:
 
     hfig = plt.figure(figsize=(16,13))
 
-    margin=[0.04,0.06,0.04,0.1,0.03,0.06]
+    margin=[0.05,0.06,0.04,0.06,0.03,0.06]
     barbox=[0.016,0.008,0.65]
     windows=[4,3]
     size=[1,1]
@@ -230,10 +184,15 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 0,0
+
+    axes_pos = [ 0.0500,  0.7800,  0.2767,  0.1800]
     
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.04,0.79,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -244,7 +203,7 @@ for tid in [0]:
     path_dataset_r="/psd/El_wkx"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -255,25 +214,27 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin1,vmax=vmax1)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
         
     ##### wave mode
 
-    #haxe.annotate(r"$Langmuir$",xy=(-2.5,1.2),xytext=(-14,1.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
+    haxe.annotate(r"$Beam\textendash Beam$",xy=(-4.5,1.8),xytext=(-18.0,1.2),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(11,0.1),xytext=(12.5,0.55),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(-12,0.1),xytext=(-18,0.55),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
 
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(-3.5,1.4),xytext=(-18.5,1.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    #haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-    haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+    #haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
 
-    haxe.annotate(r"$hybrid$",xy=(7,0.2),xytext=(7.5,0.65),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+    #haxe.annotate(r"$hybrid$",xy=(7,0.2),xytext=(7.5,0.65),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
 
     #haxe.annotate(r"$EA$",xy=(14.5,0.1),xytext=(9.0,0.45),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
@@ -302,7 +263,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\iota}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{l}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     if rid==0:
@@ -321,9 +282,15 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 1,0
+
+    axes_pos = [ 0.0500,  0.5400,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.04,0.56,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -334,7 +301,7 @@ for tid in [0]:
     path_dataset_r="/psd/Et_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -345,15 +312,15 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin2,vmax=vmax2)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
 
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
 
         
@@ -375,7 +342,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\tau}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{t}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     haxe.set_xlabel(r"$k_{\perp}%s$"%(unit_kxy_symbol),fontsize=24)
@@ -387,9 +354,15 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 2,0
+
+    axes_pos = [ 0.0500,  0.3000,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.04,0.33,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -400,7 +373,7 @@ for tid in [0]:
     path_dataset_r="/psd/Bz_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -411,33 +384,15 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin2,vmax=vmax2)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
 
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
-
-
-    r'''
-    ######################################## cone
-
-    vd0    = 0.3*CGS["c"]
-    #vd1    = 0.3*CGS["c"]
-
-    k = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    w = k*vd0
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.5,color="w",label=r"$Langmuir(BG)$")
-
-    haxe.plot(k/norm_k,-1.0*w/norm_w,linestyle="-.",linewidth=1.5,color="w",label=r"$Langmuir(BG)$")
-    '''
-
-
-
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
 
         
@@ -474,142 +429,104 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 3,0
+
+    axes_pos = [ 0.0500,  0.0600,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.04,0.1,0.28,0.17]
     haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
-
-    ######################################## Bohm-Gross
-
-    #k = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    #w = numpy.sqrt(wpe*wpe+3.0*numpy.power(k*vthe0,2.0))
-
-    #haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.5,color="r",label=r"$Langmuir(BG)$")
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
 
 
-    ########################################
-    #list_color04 = ["b","coral","g"]
+    ######################################## beam-beam
 
-    list_color04=["r","coral","m"]
+    m = 0
+    wm_real = numpy.copy(wroots_real_run1[:,m])
 
-    alpha0_run1 = 0.5
-    alpha1_run1 = 0.5
-    vd0_run1    = -0.3*CGS["c"]
-    vd1_run1    =  0.3*CGS["c"]
+    index = wm_real>=0
 
-    k = numpy.arange(-3000,3000+1,1)*0.01*norm_k
-
-    w_run1 = wave_equation_two_electrons_twelveth_solve(wpe, mu, alpha0_run1, alpha1_run1, vd0_run1, vd1_run1, vthe0, vthe1, k,
-    a=1.0, b=1.0,
-    lam_dist=1.0,
-    lam_slope=1.0,
-    lam_g=0.8,
-    lam_gslope=0.8,
-    lam_curv=0.25,
-    lam_sep=0.15,
-    tol=1.0e-12,
-    repair_passes=8)
-
-    list_wavemode = ["Langmuir","beam","beam","beam"+"$-$"+"like","EA"]
-
-    for i in [0]:
-        wtmp=numpy.real(w_run1[i,:])
-        haxe.plot(k/norm_k,wtmp/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-    for i in [1,10]:
-        wtmp=numpy.real(w_run1[i,:])
-
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-
-    for i in [4,7]:
-        wtmp=numpy.real(w_run1[i,:])
-
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-
-
-    for i in [4,7]:
-        wtmp=numpy.real(w_run1[i,:])
-
-        index=wtmp/norm_w>=-100
-        #haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-
-        xtmp=k[index]/norm_k
-        ytmp=wtmp[index]/norm_w
-
-        spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
-        xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
-        ytmp = spline(xtmp)
-
-        haxe.plot(xtmp,ytmp,linestyle="-.",linewidth=1.0,color=list_color12[i])
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="r",label=r"$beam\textendash beam$")
 
 
 
+
+    m = 2
+    wm_real = numpy.copy(wroots_real_run1[:,m])
+
+    index = wm_real<=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="m")
+
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="m")
+
+
+    '''
+    m = 3
+    wm_real = numpy.copy(wroots_real_run1[:,m])
+
+    index = wm_real<=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="g")
+    
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="g")
+
+    m = 4
+    wm_real = numpy.copy(wroots_real_run1[:,m])
+
+    index = wm_real<=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="g")
+    
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="g")
+    '''
+
+
+    m = 5
+    wm_real = numpy.copy(wroots_real_run1[:,m])
+
+    index = wm_real<=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="m")
+    
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="m")
+
+
+
+    ######################################## Beam
+
+    wBeam0 = vd0_run1*k
+    haxe.plot(k/norm_k, wBeam0/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+    wBeam1 = vd1_run1*k
+    haxe.plot(k/norm_k, wBeam1/norm_w,linestyle="--",linewidth=lwid,color="g")
 
 
     ######################################## IA
-    w = wave_equation_two_electrons_IA_solve_2(wpe,mu,alpha0_run1,alpha1_run1,vthe0,vthe1,k)
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-",linewidth=1.0,color="b",label=r"$IA$")
 
+    #haxe.plot(k/norm_k,wIA_run3/norm_w,linestyle="-",linewidth=lwid,color="b",label=r"$Ion\textendash Acoustic$")
 
 
     ######################################## MHD waves
-    theta=0
 
-    W_TMP=yaoxpy.plasma_waves_MHD(K_TMP,wpe,wce,mu,CGS["c"],theta)
-
-
-    haxe.plot(K_TMP/norm_k,W_TMP[:,1]/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
-
-
-
-    ######################################## thermal mode
-
-    #k2 = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    #w  = 3.0*vthe0*k2
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm 3v_{the0}\cdot k$")
-
-    #w = numpy.power(3.0*numpy.power(vthe0*k2*wpe,2.0),0.25)
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm (\sqrt{3}\omega_{pe}v_{the0}\cdot k)^{1/2}$")
-
-
-
-    #haxe.legend(loc="upper center",frameon=True,fontsize=10)
+    haxe.plot(k/norm_k,wT_run1/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
 
 
     ##### wave mode
 
-    #haxe.annotate(r"$Langmuir$",xy=(-2.5,1.2),xytext=(-14,1.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
+    haxe.annotate(r"$Beam\textendash Beam$",xy=(-4.5,1.8),xytext=(-18.0,1.2),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(11,0.1),xytext=(12.5,0.55),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+
+    #haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(-12,0.1),xytext=(-18,0.55),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+
+    haxe.annotate(r"$beam$",xy=(11,3.0),xytext=(13.5,2.4),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
 
 
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(-3.5,1.4),xytext=(-18.5,1.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
-
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-    haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-
-    haxe.annotate(r"$hybrid$",xy=(7,0.2),xytext=(7.5,0.65),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-
-    #haxe.annotate(r"$EA$",xy=(14.5,0.1),xytext=(9.0,0.45),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-    haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.5,2.35),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
-
-
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
     ######################################## harmonic
 
@@ -671,10 +588,16 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 0,1
+
+    axes_pos = [ 0.3567,  0.7800,  0.2767,  0.1800]
     
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.35,0.79,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -685,7 +608,7 @@ for tid in [0]:
     path_dataset_r="/psd/El_wkx"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -696,30 +619,27 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin1,vmax=vmax1)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
         
     ##### wave mode
 
     #haxe.annotate(r"$Langmuir$",xy=(1.5,1.2),xytext=(-8,1.65),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(-5.0,1.5),xytext=(-10.5,2.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    haxe.annotate(r"$Beam\textendash Beam$",xy=(-5.0,1.5),xytext=(-10.5,2.15),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(-12,0.1),xytext=(-18,0.55),arrowprops=dict(facecolor="lime",edgecolor="lime",width=0.2,headwidth=3.0,headlength=3.0),color="lime")
+    
+    #haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+
+    #haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
 
+    haxe.annotate(r"$hybrid$",xy=(8,0.55),xytext=(10,0.9),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-    haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-
-    haxe.annotate(r"$hybrid$",xy=(7,0.45),xytext=(8.5,0.85),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-    #haxe.annotate(r"$EA$",xy=(14.5,0.1),xytext=(9.0,0.45),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-    #haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.5,2.35),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
 
         
     haxe.set_xlim(xmin,xmax)
@@ -742,7 +662,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\iota}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{l}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     if rid==0:
@@ -761,9 +681,16 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 1,1
+
+    axes_pos = [ 0.3567,  0.5400,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.35,0.56,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -776,7 +703,7 @@ for tid in [0]:
     path_dataset_r="/psd/Et_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -787,15 +714,15 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin2,vmax=vmax2)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
 
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
         
     haxe.set_xlim(xmin,xmax)
@@ -816,7 +743,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\tau}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{t}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     haxe.set_xlabel(r"$k_{\perp}%s$"%(unit_kxy_symbol),fontsize=24)
@@ -829,9 +756,14 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 2,1
+    axes_pos = [ 0.3567,  0.3000,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.35,0.33,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -844,7 +776,7 @@ for tid in [0]:
     path_dataset_r="/psd/Bz_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -855,15 +787,15 @@ for tid in [0]:
     him=haxe.imshow(data2d,origin="lower",extent=[numpy.min(ky),numpy.max(ky),numpy.min(kw),numpy.max(kw)],cmap=cmap,aspect="auto",vmin=vmin2,vmax=vmax2)
 
 
-    #if cid==2:
-    #   axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-    #   haxe_bar = hfig.add_axes(axes_pos)
-    #   hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+    if cid==2:
+       axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
+       hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
 
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
         
     haxe.set_xlim(xmin,xmax)
@@ -896,165 +828,115 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 3,1
+    axes_pos = [ 0.3567,  0.0600,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
     #axes_pos[0]+=0.05
-    axes_pos = [0.35,0.1,0.28,0.17]
     haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
 
 
-    ######################################## Bohm-Gross
-
-    #k = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    #w = numpy.sqrt(wpe*wpe+3.0*numpy.power(k*vthe0,2.0))
-
-    #haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.5,color="r",label=r"$Langmuir(BG)$")
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
 
 
-    ########################################
-    #list_color04 = ["b","coral","g"]
 
-    list_color04=["r","coral","m"]
+    ######################################## beam-beam
 
-    nop0 = 400
-    nop1 = 100
+    m = 0
+    wm_real = numpy.copy(wroots_real_run2[:,m])
 
-    alpha0_run2 = nop0/(nop0+nop1)
-    alpha1_run2 = nop1/(nop0+nop1)
+    index = wm_real>=0
 
-    vd0_run2    = -0.3*CGS["c"]*nop1/nop0
-    vd1_run2    = 0.3*CGS["c"]
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="r",label=r"$beam\textendash beam$")
 
 
-    k = numpy.arange(-3000,3000+1,1)*0.01*norm_k
+    m = 2
+    wm_real = numpy.copy(wroots_real_run2[:,m])
 
-    w_run2 = wave_equation_two_electrons_twelveth_solve(wpe, mu, alpha0_run2, alpha1_run2, vd0_run2, vd1_run2, vthe0, vthe1, k,
-    a=1.0, b=1.0,
-    lam_dist=1.0,
-    lam_slope=1.0,
-    lam_g=0.8,
-    lam_gslope=0.8,
-    lam_curv=0.25,
-    lam_sep=0.15,
-    tol=1.0e-12,
-    repair_passes=8)
+    index = wm_real<0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="m")
 
-    list_wavemode = ["Langmuir","beam","beam","beam"+"$-$"+"like","EA"]
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="m",label=r"$beam\ \omega=v_{d2}k$")
 
-    for i in [0]:
-        wtmp=numpy.real(w_run2[i,:])
-        haxe.plot(k/norm_k,wtmp/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
+    xtmp=k[index]/norm_k
+    ytmp=wm_real[index]/norm_w
 
-    for i in [1,10]:
-        wtmp=numpy.real(w_run2[i,:])
+    spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
+    xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
+    ytmp = spline(xtmp)
 
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-
-    for i in [4,7]:
-        wtmp=numpy.real(w_run2[i,:])
-
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-    
-    
-    for i in [4,7]:
-        wtmp=numpy.real(w_run2[i,:])
-
-        index=wtmp/norm_w>=-100
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-.",linewidth=1.0,color=list_color12[i])
-
-        xtmp=k[index]/norm_k
-        ytmp=wtmp[index]/norm_w
-
-        spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
-        xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
-        ytmp = spline(xtmp)
-
-        haxe.plot(xtmp,ytmp,linestyle="-.",linewidth=1.0,color=list_color12[i])
-     
+    haxe.plot(xtmp,ytmp,linestyle="--",linewidth=lwid,color="m")
 
 
+    '''
+    m = 3
+    wm_real = numpy.copy(wroots_real_run2[:,m])
+
+    index = wm_real>=0
+
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="g")
+    '''
+
+
+    m = 4
+    wm_real = numpy.copy(wroots_real_run2[:,m])
+
+    index = wm_real>=0
+
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="lime")
+
+    m = 5
+    wm_real = numpy.copy(wroots_real_run2[:,m])
+
+    index = wm_real>=0
+
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="coral")
+
+
+
+    ######################################## Beam
+
+    wBeam0 = vd0_run2*k
+    haxe.plot(k/norm_k, wBeam0/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+    wBeam1 = vd1_run2*k
+    haxe.plot(k/norm_k, wBeam1/norm_w,linestyle="--",linewidth=lwid,color="g")
 
 
     ######################################## IA
-    w = wave_equation_two_electrons_IA_solve_2(wpe,mu,alpha0_run2,alpha1_run2,vthe0,vthe1,k)
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-",linewidth=1.0,color="b",label=r"$IA$")
 
-
-
-
-    ######################################## beam mode
-
-    #k2   = numpy.arange(0,30+0.01,0.01)*norm_k
-
-    #w = vb*k2
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="-",linewidth=2.0,color="g",label=r"$beam\ \omega=v_{b}\cdot k$")
-
+    #haxe.plot(k/norm_k,wIA_run3/norm_w,linestyle="-",linewidth=lwid,color="b",label=r"$Ion\textendash Acoustic$")
 
 
 
     ######################################## MHD waves
-    theta=0
 
-    W_TMP=yaoxpy.plasma_waves_MHD(K_TMP,wpe,wce,mu,CGS["c"],theta)
-
-
-    haxe.plot(K_TMP/norm_k,W_TMP[:,1]/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
-
-
-
-    ######################################## thermal mode
-
-    #k2 = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    #w  = 3.0*vthe0*k2
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm 3v_{the0}\cdot k$")
-
-    #w = numpy.power(3.0*numpy.power(vthe0*k2*wpe,2.0),0.25)
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm (\sqrt{3}\omega_{pe}v_{the0}\cdot k)^{1/2}$")
-
-
-
-    #haxe.legend(loc="upper center",frameon=True,fontsize=10)
-
-
-
-
+    haxe.plot(k/norm_k,wT_run2/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
 
 
     ##### wave mode
 
     #haxe.annotate(r"$Langmuir$",xy=(1.5,1.2),xytext=(-8,1.65),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(-5.0,1.5),xytext=(-10.5,2.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    haxe.annotate(r"$Beam\textendash Beam$",xy=(-5.0,1.5),xytext=(-10.5,2.15),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+
+    haxe.annotate(r"$ion\textendash inertia$",xy=(-12,0.1),xytext=(-18,0.55),arrowprops=dict(facecolor="lime",edgecolor="lime",width=0.2,headwidth=3.0,headlength=3.0),color="lime")
+
+    #haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+
+    #haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+
+
+    haxe.annotate(r"$hybrid$",xy=(8,0.55),xytext=(10,0.9),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
 
 
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
-    haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
-
-
-    haxe.annotate(r"$hybrid$",xy=(7,0.55),xytext=(8.5,0.9),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+    haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.0,2.1),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
 
 
-
-
-    #haxe.annotate(r"$EA$",xy=(14.5,0.1),xytext=(9.0,0.45),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-    haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.5,2.35),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
-
-
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
 
     ######################################## harmonic
@@ -1113,9 +995,15 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 0,2
+
+    axes_pos = [ 0.6633,  0.7800,  0.2767,  0.1800]
+    
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.66,0.79,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -1126,7 +1014,7 @@ for tid in [0]:
     path_dataset_r="/psd/El_wkx"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -1138,10 +1026,15 @@ for tid in [0]:
 
 
     if cid==2:
-       #axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-       axes_pos = [0.956,0.81975,0.008,0.1105 ]
-       haxe_bar = hfig.add_axes(axes_pos)
+       axes_pos_bar = [ 0.9560,  0.8115,  0.0080,  0.1170]
+
+       #axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
        hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+
+       print("rid,cid      = (%d, %d)"%(rid,cid))
+       print("axes_pos_bar = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos_bar[0],axes_pos_bar[1],axes_pos_bar[2],axes_pos_bar[3]))
+
 
 
 
@@ -1149,21 +1042,19 @@ for tid in [0]:
         
     ##### wave mode
 
-    #haxe.annotate(r"$Langmuir$",xy=(2,1.2),xytext=(-9,2),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
-
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(1.5,1.3),xytext=(-12.5,2.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    haxe.annotate(r"$Langmuir\textendash Beam$",xy=(1.5,1.3),xytext=(-14,2.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
 
 
 
 
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+    haxe.annotate(r"$IA$",xy=(16,-0.08),xytext=(12,-0.6),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
     haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
 
-    haxe.annotate(r"$hybrid$",xy=(13,0.85),xytext=(15,0.4),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
+    haxe.annotate(r"$beam\textendash modified$",xy=(6.5,0.7),xytext=(8,0.1),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
-    #haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.5,2.35),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
+
 
 
     haxe.annotate(r"$F$",xy=(-2.0,0.8),xytext=(-5,0.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
@@ -1181,12 +1072,12 @@ for tid in [0]:
     #haxe.text(17,3.8,r"$L_4$",color=YXColorBlue,fontsize=20)
 
 
-    kl=4.2
-    wl=0.95
-    haxe.text(1.0*kl,1.0*wl,r"$L_1$",color=YXColorBlue,fontsize=20)
-    haxe.text(2.0*kl,2.0*wl,r"$L_2$",color=YXColorBlue,fontsize=20)
-    haxe.text(3.0*kl,3.0*wl,r"$L_3$",color=YXColorBlue,fontsize=20)
-    haxe.text(4.0*kl,4.0*wl,r"$L_4$",color=YXColorBlue,fontsize=20)
+    kF=4.4
+    wF=0.96
+    haxe.text(1.0*kF,1.0*wF,r"$L_1$",color=YXColorBlue,fontsize=20)
+    haxe.text(2.0*kF,2.0*wF,r"$L_2$",color=YXColorBlue,fontsize=20)
+    haxe.text(3.0*kF,3.0*wF,r"$L_3$",color=YXColorBlue,fontsize=20)
+    haxe.text(4.0*kF,4.0*wF,r"$L_4$",color=YXColorBlue,fontsize=20)
 
 
 
@@ -1210,7 +1101,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\iota}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{l}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     if rid==0:
@@ -1229,9 +1120,15 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 1,2
+    axes_pos = [ 0.6633,  0.5400,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.66,0.56,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
 
 
     dir_tmp = list_dirname[cid]
@@ -1242,7 +1139,7 @@ for tid in [0]:
     path_dataset_r="/psd/Et_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -1254,15 +1151,20 @@ for tid in [0]:
 
 
     if cid==2:
-       #axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-       axes_pos = [0.956,0.58975,0.008,0.1105 ]
-       haxe_bar = hfig.add_axes(axes_pos)
+       axes_pos_bar = [ 0.9560,  0.5715,  0.0080,  0.1170]
+
+       #axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
        hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
+
+       print("rid,cid      = (%d, %d)"%(rid,cid))
+       print("axes_pos_bar = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos_bar[0],axes_pos_bar[1],axes_pos_bar[2],axes_pos_bar[3]))
+
 
 
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
     haxe.annotate(r"$F$",xy=(-2.0,0.8),xytext=(-5,0.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
@@ -1288,7 +1190,7 @@ for tid in [0]:
     # label
     xlim_tmp=haxe.get_xlim()
     ylim_tmp=haxe.get_ylim()
-    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{\tau}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
+    haxe.text(xlim_tmp[0]+0.06*(xlim_tmp[1]-xlim_tmp[0]),ylim_tmp[0]+0.85*(ylim_tmp[1]-ylim_tmp[0]),r"$(%s%s)E_{t}$"%(chr(ord('a')+cid),rid+1),color="k",fontsize=20)
 
 
     haxe.set_xlabel(r"$k_{\perp}%s$"%(unit_kxy_symbol),fontsize=24)
@@ -1302,9 +1204,14 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 2,2
+    axes_pos = [ 0.6633,  0.3000,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.66,0.33,0.28,0.17]
     haxe=hfig.add_axes(axes_pos)
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
 
 
     dir_tmp = list_dirname[cid]
@@ -1315,7 +1222,7 @@ for tid in [0]:
     path_dataset_r="/psd/Bz_wky"
     data2d = H5FILE_R[path_dataset_r][()]
     #data2d = data2d/B0/B0
-    data2d = yaoxpy.data_zero_replace(data2d) 
+    data2d = yaoxpy_vis.data_zero_replace(data2d) 
     data2d = numpy.log10(data2d)
     data2d = numpy.fliplr(data2d)
 
@@ -1327,32 +1234,20 @@ for tid in [0]:
 
 
     if cid==2:
-       #axes_pos = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
-       axes_pos = [0.956,0.35975,0.008,0.1105 ]
-       haxe_bar = hfig.add_axes(axes_pos)
+       axes_pos_bar = [ 0.9560,  0.3315,  0.0080,  0.1170]
+
+       #axes_pos_bar = yaoxpy_vis.fig_axes_position_colorbar(index=[rid,cid],size=[1,1],windows=windows,margin=margin,orient='vertical',barbox=barbox)
+       haxe_bar = hfig.add_axes(axes_pos_bar)
        hfig.colorbar(him,cax=haxe_bar,orientation='vertical',shrink=0.5)
 
+       print("rid,cid      = (%d, %d)"%(rid,cid))
+       print("axes_pos_bar = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos_bar[0],axes_pos_bar[1],axes_pos_bar[2],axes_pos_bar[3]))
 
 
-
-    r'''
-    ######################################## cone
     
-    vd1_run3    = 0.3*CGS["c"]
-
-    k = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    w = k*vd1_run3
-
-
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.5,color="w",label=r"$Langmuir(BG)$")
-    '''
-
-
-
     ##### wave mode
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
     haxe.annotate(r"$F$",xy=(-2.0,0.8),xytext=(-5,0.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
@@ -1391,163 +1286,130 @@ for tid in [0]:
     ############################################################
     ############################################################
     rid,cid = 3,2
+    axes_pos = [ 0.6633,  0.0600,  0.2767,  0.1800]
+
     #axes_pos=yaoxpy_vis.fig_axes_position(index=[rid,cid],size=size,windows=windows,margin=margin)
-    axes_pos = [0.66,0.1,0.28,0.17]
     haxe=hfig.add_axes(axes_pos,facecolor="whitesmoke")
+
+    print("rid,cid  = (%d, %d)"%(rid,cid))
+    print("axes_pos = [%7.4f, %7.4f, %7.4f, %7.4f]"%(axes_pos[0],axes_pos[1],axes_pos[2],axes_pos[3]))
+
+
 
 
     ######################################## Bohm-Gross
 
-    k = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    wpeL=0.875*wpe
-
-    #w = numpy.sqrt(wpe*wpe+3.0*numpy.power(k*vthe0,2.0))
-    w = numpy.sqrt(wpeL*wpeL+3.0*numpy.power(k*vthe0,2.0))
-
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-.",linewidth=1.5,color="r",label=r"$Langmuir(BG)$")
+    haxe.plot(k/norm_k,wL_run3/norm_w,linestyle="-.",linewidth=1.5,color="r",label=r"$Langmuir$")
 
 
-    ########################################
-    #list_color04 = ["b","coral","g"]
+    ######################################## beam-beam
 
-    list_color04=["r","coral","m"]
+    m = 0
+    wm_real = numpy.copy(wroots_real_run3[:,m])
 
-    nop0 = 400
-    nop1 = 20
+    index = wm_real>=0
 
-    alpha0_run3 = nop0/(nop0+nop1)
-    alpha1_run3 = nop1/(nop0+nop1)
-
-    norm_w = wpe*numpy.sqrt(alpha0_run3)
-
-    vd0_run3    = -0.015*CGS["c"]
-    vd1_run3    = 0.3*CGS["c"]
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="r",label=r"$beam\textendash beam$")
 
 
+    m = 2
+    wm_real = numpy.copy(wroots_real_run3[:,m])
 
-    k = numpy.arange(-3000,3000+1,1)*0.01*norm_k
+    index = wm_real<0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="--",linewidth=lwid,color="m")
 
-    w_run3 = wave_equation_two_electrons_twelveth_solve(wpe, mu, alpha0_run3, alpha1_run3, vd0_run3, vd1_run3, vthe0, vthe1, k,
-    a=1.0, b=1.0,
-    lam_dist=1.0,
-    lam_slope=1.0,
-    lam_g=0.8,
-    lam_gslope=0.8,
-    lam_curv=0.25,
-    lam_sep=0.15,
-    tol=1.0e-12,
-    repair_passes=8)
+    index = wm_real>=0
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="m",label=r"$beam\ \omega=v_{d2}k$")
 
-    list_wavemode = ["Langmuir","beam","beam","beam"+"$-$"+"like","EA"]
+    xtmp=k[index]/norm_k
+    ytmp=wm_real[index]/norm_w
 
-    for i in [0]:
-        wtmp=numpy.real(w_run3[i,:])
-        haxe.plot(k/norm_k,wtmp/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
+    spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
+    xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
+    ytmp = spline(xtmp)
 
-    for i in [1,10]:
-        wtmp=numpy.real(w_run3[i,:])
-
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
-
-    for i in [4,7]:
-        wtmp=numpy.real(w_run3[i,:])
-
-        index=wtmp/norm_w>=0.0
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-",linewidth=1.0,color=list_color12[i])
-
-        index=numpy.logical_and(wtmp/norm_w<=0.0,wtmp/norm_w>=-0.5)
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="--",linewidth=1.0,color=list_color12[i])
+    haxe.plot(xtmp,ytmp,linestyle="--",linewidth=lwid,color="m")
 
 
-    for i in [4,7]:
-        wtmp=numpy.real(w_run3[i,:])
+    '''
+    m = 3
+    wm_real = numpy.copy(wroots_real_run3[:,m])
 
-        index=wtmp/norm_w>=-100
-        haxe.plot(k[index]/norm_k,wtmp[index]/norm_w,linestyle="-.",linewidth=1.0,color=list_color12[i])
+    index = wm_real>=0
 
-        xtmp=k[index]/norm_k
-        ytmp=wtmp[index]/norm_w
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="g")
+    '''
 
-        spline = scipy.interpolate.UnivariateSpline(xtmp,ytmp,s=5.0)
-        xtmp = numpy.linspace(0.0,numpy.max(xtmp),400)
-        ytmp = spline(xtmp)
 
-        haxe.plot(xtmp,ytmp,linestyle="-.",linewidth=1.0,color=list_color12[i])
+    m = 4
+    wm_real = numpy.copy(wroots_real_run3[:,m])
+
+    index = wm_real>=0
+
+    haxe.plot(k[index]/norm_k,wm_real[index]/norm_w,linestyle="-",linewidth=lwid,color="lime")
+
+    ######################################## Beam
+
+    wBeam0 = vd0_run3*k
+    haxe.plot(k/norm_k, wBeam0/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+    wBeam1 = vd1_run3*k
+    haxe.plot(k/norm_k, wBeam1/norm_w,linestyle="--",linewidth=lwid,color="g")
+
+
 
 
     ######################################## IA
-    w = wave_equation_two_electrons_IA_solve_2(wpe,mu,alpha0_run3,alpha1_run3,vthe0,vthe1,k)
-    haxe.plot(k/norm_k,w/norm_w,linestyle="-",linewidth=1.0,color="b",label=r"$IA$")
 
-
-
-    ######################################## beam mode
-
-    #k2   = numpy.arange(0,30+0.01,0.01)*norm_k
-
-    #w = vb*k2
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="-",linewidth=2.0,color="g",label=r"$beam\ \omega=v_{b}\cdot k$")
+    haxe.plot(k/norm_k,wIA_run3/norm_w,linestyle="-",linewidth=lwid,color="b",label=r"$Ion\textendash Acoustic$")
 
 
 
     ######################################## MHD waves
-    theta=0
 
-    W_TMP=yaoxpy.plasma_waves_MHD(K_TMP,wpe,wce,mu,CGS["c"],theta)
-
-
-    haxe.plot(K_TMP/norm_k,W_TMP[:,1]/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
+    haxe.plot(k/norm_k,wT_run3/norm_w,color=YXColorBlue,linestyle="-",linewidth=1.0,label=r"$T$")
 
 
+    ######################################## thermal
 
-    ######################################## thermal mode
-
-    #k2 = numpy.arange(-30,30+0.01,0.01)*norm_k
-
-    #w  = 3.0*vthe0*k2
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm 3v_{the0}\cdot k$")
-
-    #w = numpy.power(3.0*numpy.power(vthe0*k2*wpe,2.0),0.25)
-    #haxe.plot(k2/norm_k,w/norm_w,linestyle="--",linewidth=1.0,color="grey")
-    #haxe.plot(k2/norm_k,-1.0*w/norm_w,linestyle="--",linewidth=1.0,color="grey",label=r"$\omega=\pm (\sqrt{3}\omega_{pe}v_{the0}\cdot k)^{1/2}$")
+    k2 = numpy.arange(-1000,1000+1,1)*0.01*norm_k
 
 
+    wthermal = k2*vthe1
 
-    #haxe.legend(loc="upper center",frameon=True,fontsize=10)
-
-
+    haxe.plot(k2/norm_k,wthermal/norm_w,color="coral",linestyle="--",linewidth=1.0,label=r"$\omega=v_{the2}k$")
 
 
 
 
     ##### wave mode
 
-    haxe.annotate(r"$Langmuir$",xy=(13,1.3),xytext=(8,1.7),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
+    haxe.annotate(r"$Langmuir$",xy=(13,1.1),xytext=(8,1.7),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
-    haxe.annotate(r"$Beam\textendash Beam$",xy=(1.5,1.2),xytext=(-14.5,1.7),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
+    haxe.annotate(r"$Langmuir\textendash Beam$",xy=(1.5,1.3),xytext=(-14,2.0),arrowprops=dict(facecolor="r",edgecolor="r",width=0.4,headwidth=4.0,headlength=4.0),color="r")
 
 
-    haxe.annotate(r"$IA$",xy=(15,0.1),xytext=(10.5,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
+    haxe.annotate(r"$IA$",xy=(16,-0.08),xytext=(12,-0.6),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
     haxe.annotate(r"$IA$",xy=(-15,0.1),xytext=(-13,0.45),arrowprops=dict(facecolor="b",edgecolor="b",width=0.2,headwidth=3.0,headlength=3.0),color="b")
 
-    haxe.annotate(r"$hybrid$",xy=(13,0.85),xytext=(15,0.4),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
-
-    haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.5,2.35),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
+    haxe.annotate(r"$beam\textendash modified$",xy=(8.5,0.8),xytext=(10.5,0.15),arrowprops=dict(facecolor="m",edgecolor="m",width=0.2,headwidth=3.0,headlength=3.0),color="m")
 
 
-    haxe.annotate(r"$T$",xy=(-3.5,2.9),xytext=(-7.0,2.5),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
+    haxe.annotate(r"$beam$",xy=(10,2.8),xytext=(12.0,2.1),arrowprops=dict(facecolor="g",edgecolor="g",width=0.2,headwidth=3.0,headlength=3.0),color="g")
+
+    haxe.annotate(r"$T$",xy=(-3.5,3.3),xytext=(-7.0,2.8),arrowprops=dict(facecolor=YXColorBlue,edgecolor=YXColorBlue,width=0.2,headwidth=3.0,headlength=3.0),color=YXColorBlue)
 
     
+    haxe.text(0.5,-0.4,r"$\omega=v_{the}\cdot k$",color="coral",rotation=8)
+
+
+
+
+
     ######################################## harmonic
 
-    k2 = numpy.arange(-30,30+0.01,0.01)*norm_k
+    #k2 = numpy.arange(-20,20+0.01,0.01)*norm_k
 
     #w  = numpy.ones(len(k2))
     #haxe.plot(k2/norm_k,w,linestyle="--",linewidth=1.0,color="r")
@@ -1555,16 +1417,12 @@ for tid in [0]:
     #w  = 2.0*numpy.ones(len(k2))
     #haxe.plot(k2/norm_k,w,linestyle="--",linewidth=1.0,color="r")
 
-    #w  = 3.0*numpy.ones(len(k2))
-    #haxe.plot(k2/norm_k,w,linestyle="--",linewidth=1.0,color="r")
+
+    #haxe.annotate(r"$F$",xy=(-2.0,0.8),xytext=(-5,0.3),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
+
+    #haxe.annotate(r"$H$",xy=(-2.5,1.7),xytext=(-6,1.2),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
 
-    #if cid>0:
-    #   haxe.annotate(r"$F$",xy=(3.8,1.1),xytext=(6.0,1.4),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
-    #
-    #   haxe.annotate(r"$H$",xy=(3.8,2.1),xytext=(6.0,2.4),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
-    #
-    #   haxe.annotate(r"$H_3$",xy=(3.8,3.1),xytext=(6.0,3.4),arrowprops=dict(facecolor="r",edgecolor="r",width=0.2,headwidth=3.0,headlength=3.0),color="r")
 
     haxe.grid(linestyle="--",linewidth=0.2,color="w")
 
@@ -1603,4 +1461,4 @@ for tid in [0]:
     fig_name = os.path.splitext(os.path.basename(__file__))[0]+"_Timestep_%04d"%(Timestep)
 
 
-    yaoxpy.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)
+    yaoxpy_vis.fig_save(plt,figpath=fig_path,figname=fig_name,extension=fig_fmts)
