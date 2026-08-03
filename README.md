@@ -126,9 +126,20 @@ Two_Stream_Instability_Study/
 └── requirements.txt
 ```
 
+
 ---
 
 ## Reproducing the Figures
+
+
+Please generate data about wave branches before any operation.
+
+```bash
+cd scripts
+python Data_wave_equation_three_runs.py
+```
+
+
 
 Each figure in the manuscript can be reproduced independently using the corresponding Python script.
 
